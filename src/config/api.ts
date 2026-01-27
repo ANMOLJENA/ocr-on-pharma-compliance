@@ -7,8 +7,8 @@ export const API_BASE_URL = 'http://localhost:5000/api';
 
 export const API_ENDPOINTS = {
   // OCR Operations
-  OCR_UPLOAD: '/ocr/upload',
-  OCR_PROCESS: (documentId: number) => `/ocr/process/${documentId}`,
+  OCR_UPLOAD: '/ocr/multilingual/upload',
+  OCR_PROCESS: (documentId: number) => `/ocr/multilingual/process/${documentId}`,
   OCR_RESULTS: (resultId: number) => `/ocr/results/${resultId}`,
   OCR_VALIDATE: (resultId: number) => `/ocr/results/${resultId}/validate`,
   OCR_ERRORS: (resultId: number) => `/ocr/results/${resultId}/errors`,

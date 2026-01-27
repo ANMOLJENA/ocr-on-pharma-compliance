@@ -310,7 +310,8 @@ def upload_multilingual():
                 'detected_language': ocr_result.get('detected_language'),
                 'original_language': ocr_result.get('original_language'),
                 'translated': ocr_result.get('translated', False),
-                'original_text': ocr_result.get('original_text')
+                'original_text': ocr_result.get('original_text'),
+                'translated_text': ocr_result.get('extracted_text') if ocr_result.get('translated') else None
             }
             
             db.session.add(ocr_record)
@@ -326,6 +327,8 @@ def upload_multilingual():
                 'detected_language': ocr_result.get('detected_language'),
                 'original_language': ocr_result.get('original_language'),
                 'translated': ocr_result.get('translated', False),
+                'original_text': ocr_result.get('original_text'),
+                'translated_text': ocr_result.get('extracted_text') if ocr_result.get('translated') else None,
                 'data': ocr_record.to_dict()
             }), 200
             
@@ -367,7 +370,8 @@ def process_multilingual(document_id):
             'detected_language': ocr_result.get('detected_language'),
             'original_language': ocr_result.get('original_language'),
             'translated': ocr_result.get('translated', False),
-            'original_text': ocr_result.get('original_text')
+            'original_text': ocr_result.get('original_text'),
+            'translated_text': ocr_result.get('extracted_text') if ocr_result.get('translated') else None
         }
         
         db.session.add(ocr_record)
@@ -379,6 +383,8 @@ def process_multilingual(document_id):
             'detected_language': ocr_result.get('detected_language'),
             'original_language': ocr_result.get('original_language'),
             'translated': ocr_result.get('translated', False),
+            'original_text': ocr_result.get('original_text'),
+            'translated_text': ocr_result.get('extracted_text') if ocr_result.get('translated') else None,
             'data': ocr_record.to_dict()
         }), 200
         

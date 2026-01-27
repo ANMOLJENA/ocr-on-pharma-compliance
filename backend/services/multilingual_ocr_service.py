@@ -25,6 +25,12 @@ try:
 except ImportError:
     LANGDETECT_AVAILABLE = False
 
+try:
+    from deep_translator import GoogleTranslator
+    DEEP_TRANSLATOR_AVAILABLE = True
+except ImportError:
+    DEEP_TRANSLATOR_AVAILABLE = False
+
 
 class MultilingualOCRService(TesseractOCRService):
     """
@@ -83,9 +89,11 @@ class MultilingualOCRService(TesseractOCRService):
         try:
             # First, try to detect language from image
             detected_lang = self._detect_language_from_image(image_path)
+            print(f"[MULTILINGUAL] Detected language: {detected_lang}")
             
             # Process image with detected language
             result = self._process_with_language(image_path, detected_lang)
+            print(f"[MULTILINGUAL] Extracted text length: {len(result.get('extracted_text', ''))}")
             
             # Translate to English if not already English
             if detected_lang != 'eng':
@@ -93,7 +101,10 @@ class MultilingualOCRService(TesseractOCRService):
                 result['original_text'] = result['extracted_text']
                 
                 # Translate text
+                print(f"[MULTILINGUAL] Translating from {detected_lang} to English...")
                 translated_text = self._translate_to_english(result['extracted_text'])
+                print(f"[MULTILINGUAL] Translation complete. Translated text length: {len(translated_text)}")
+                
                 result['extracted_text'] = translated_text
                 result['translated'] = True
             else:
@@ -101,10 +112,12 @@ class MultilingualOCRService(TesseractOCRService):
                 result['translated'] = False
             
             result['detected_language'] = self.LANGUAGE_CODES.get(detected_lang, detected_lang)
+            print(f"[MULTILINGUAL] Final result - Translated: {result.get('translated')}, Language: {result.get('detected_language')}")
             
             return result
             
         except Exception as e:
+            print(f"[MULTILINGUAL] Error: {str(e)}")
             raise Exception(f"Multilingual OCR processing failed: {str(e)}")
     
     def process_pdf_multilingual(self, pdf_path: str) -> Dict[str, Any]:
@@ -291,6 +304,8 @@ class MultilingualOCRService(TesseractOCRService):
         try:
             if self.translation_service == 'google' and GOOGLE_TRANSLATE_AVAILABLE:
                 return self._translate_google(text)
+            elif DEEP_TRANSLATOR_AVAILABLE:
+                return self._translate_deep_translator(text)
             elif TEXTBLOB_AVAILABLE:
                 return self._translate_textblob(text)
             else:
@@ -312,11 +327,21 @@ class MultilingualOCRService(TesseractOCRService):
             Translated text
         """
         try:
+            # Use TextBlob for translation
             blob = TextBlob(text)
             translated = blob.translate(from_lang='auto', to_lang='en')
-            return str(translated)
+            result = str(translated)
+            
+            # If translation returned empty or same as original, return original
+            if not result or result.strip() == text.strip():
+                print("Translation returned empty or same as original, using original text")
+                return text
+            
+            return result
+            
         except Exception as e:
             print(f"TextBlob translation failed: {e}")
+            # Return original text if translation fails
             return text
     
     def _translate_google(self, text: str) -> str:
@@ -337,6 +362,52 @@ class MultilingualOCRService(TesseractOCRService):
             return result['translatedText']
         except Exception as e:
             print(f"Google translation failed: {e}")
+            return text
+    
+    def _translate_deep_translator(self, text: str) -> str:
+        """
+        Translate using Deep Translator (GoogleTranslator)
+        
+        Args:
+            text: Text to translate
+            
+        Returns:
+            Translated text
+        """
+        try:
+            from deep_translator import GoogleTranslator
+            
+            # Split text into chunks (Google Translator has limits)
+            max_chars = 4500
+            chunks = []
+            current_chunk = ""
+            
+            for line in text.split('\n'):
+                if len(current_chunk) + len(line) + 1 > max_chars:
+                    if current_chunk:
+                        chunks.append(current_chunk)
+                    current_chunk = line
+                else:
+                    current_chunk += '\n' + line if current_chunk else line
+            
+            if current_chunk:
+                chunks.append(current_chunk)
+            
+            # Translate each chunk
+            translated_chunks = []
+            for chunk in chunks:
+                try:
+                    translator = GoogleTranslator(source_language='auto', target_language='en')
+                    translated = translator.translate(chunk)
+                    translated_chunks.append(translated)
+                except Exception as e:
+                    print(f"Deep translator chunk failed: {e}")
+                    translated_chunks.append(chunk)
+            
+            return '\n'.join(translated_chunks)
+            
+        except Exception as e:
+            print(f"Deep translator translation failed: {e}")
             return text
     
     def get_supported_languages(self) -> Dict[str, str]:

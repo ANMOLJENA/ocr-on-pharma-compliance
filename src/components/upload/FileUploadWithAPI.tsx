@@ -8,6 +8,7 @@ import { Upload, FileText, CheckCircle, XCircle, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
 import { Card, CardContent } from '@/components/ui/card';
+import { ExtractedTextDisplay } from '@/components/results/ExtractedTextDisplay';
 import { useFileUpload } from '@/hooks/use-api';
 import { useToast } from '@/hooks/use-toast';
 import type { OCRResult } from '@/types/api';
@@ -24,6 +25,7 @@ export function FileUploadWithAPI({
   const { uploadFile, uploading, progress, result, error, reset } = useFileUpload();
   const { toast } = useToast();
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [multilingualData, setMultilingualData] = useState<any>(null);
 
   const { getRootProps, getInputProps, isDragActive } = useDropzone({
     accept: {
@@ -54,6 +56,21 @@ export function FileUploadWithAPI({
     try {
       const response = await uploadFile(selectedFile);
       
+      console.log('Upload Response:', response); // DEBUG
+      console.log('Translated Text:', response.translated_text); // DEBUG
+      console.log('Original Text:', response.original_text); // DEBUG
+      
+      // Store multilingual data if available
+      if (response.original_text || response.translated_text) {
+        setMultilingualData({
+          originalText: response.original_text,
+          translatedText: response.translated_text,
+          detectedLanguage: response.detected_language,
+          originalLanguage: response.original_language,
+          isTranslated: response.translated,
+        });
+      }
+      
       toast({
         title: 'Upload Successful',
         description: `Document processed with ${(response.data.confidence_score * 100).toFixed(1)}% confidence`,
@@ -78,6 +95,7 @@ export function FileUploadWithAPI({
 
   const handleReset = () => {
     setSelectedFile(null);
+    setMultilingualData(null);
     reset();
   };
 
@@ -170,51 +188,70 @@ export function FileUploadWithAPI({
 
       {/* Success Result */}
       {result && !error && (
-        <Card className="border-green-200 bg-green-50">
-          <CardContent className="pt-6">
-            <div className="space-y-4">
-              <div className="flex items-start justify-between">
-                <div className="flex items-start space-x-3">
-                  <CheckCircle className="h-6 w-6 text-green-600 mt-1" />
-                  <div className="space-y-2">
-                    <p className="font-medium text-green-900">
-                      Document Processed Successfully
-                    </p>
-                    <div className="text-sm text-green-700 space-y-1">
-                      <p>
-                        <span className="font-medium">Confidence:</span>{' '}
-                        {(result.confidence_score * 100).toFixed(1)}%
+        <div className="space-y-4">
+          <Card className="border-green-200 bg-green-50">
+            <CardContent className="pt-6">
+              <div className="space-y-4">
+                <div className="flex items-start justify-between">
+                  <div className="flex items-start space-x-3">
+                    <CheckCircle className="h-6 w-6 text-green-600 mt-1" />
+                    <div className="space-y-2">
+                      <p className="font-medium text-green-900">
+                        Document Processed Successfully
                       </p>
-                      <p>
-                        <span className="font-medium">Processing Time:</span>{' '}
-                        {result.processing_time.toFixed(2)}s
-                      </p>
-                      {result.drug_name && (
+                      <div className="text-sm text-green-700 space-y-1">
                         <p>
-                          <span className="font-medium">Drug:</span> {result.drug_name}
+                          <span className="font-medium">Confidence:</span>{' '}
+                          {(result.confidence_score * 100).toFixed(1)}%
                         </p>
-                      )}
-                      {result.batch_number && (
                         <p>
-                          <span className="font-medium">Batch:</span>{' '}
-                          {result.batch_number}
+                          <span className="font-medium">Processing Time:</span>{' '}
+                          {result.processing_time.toFixed(2)}s
                         </p>
-                      )}
-                      {result.controlled_substance && (
-                        <p className="text-orange-600 font-medium">
-                          ⚠️ Controlled Substance Detected
-                        </p>
-                      )}
+                        {result.drug_name && (
+                          <p>
+                            <span className="font-medium">Drug:</span> {result.drug_name}
+                          </p>
+                        )}
+                        {result.batch_number && (
+                          <p>
+                            <span className="font-medium">Batch:</span>{' '}
+                            {result.batch_number}
+                          </p>
+                        )}
+                        {result.controlled_substance && (
+                          <p className="text-orange-600 font-medium">
+                            ⚠️ Controlled Substance Detected
+                          </p>
+                        )}
+                      </div>
                     </div>
                   </div>
+                  <Button variant="outline" size="sm" onClick={handleReset}>
+                    Upload Another
+                  </Button>
                 </div>
-                <Button variant="outline" size="sm" onClick={handleReset}>
-                  Upload Another
-                </Button>
               </div>
-            </div>
-          </CardContent>
-        </Card>
+            </CardContent>
+          </Card>
+
+          {/* Extracted Text Display with Multilingual Support */}
+          {multilingualData && (
+            <Card>
+              <CardContent className="pt-6">
+                <h3 className="text-lg font-semibold mb-4">Extracted Text</h3>
+                <ExtractedTextDisplay
+                  originalText={multilingualData.originalText}
+                  translatedText={multilingualData.translatedText}
+                  detectedLanguage={multilingualData.detectedLanguage}
+                  originalLanguage={multilingualData.originalLanguage}
+                  isTranslated={multilingualData.isTranslated}
+                  confidence={result.confidence_score}
+                />
+              </CardContent>
+            </Card>
+          )}
+        </div>
       )}
 
       {/* Error */}
