@@ -3,56 +3,17 @@ import { Navbar } from "@/components/layout/Navbar";
 import { Footer } from "@/components/layout/Footer";
 import { FileUploadWithAPI } from "@/components/upload/FileUploadWithAPI";
 import { DashboardStats } from "@/components/dashboard/DashboardStats";
-import { FeatureCard } from "@/components/features/FeatureCard";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { 
   ScanText, 
-  Languages, 
-  Shield, 
-  FileCheck, 
-  Zap, 
-  Database,
   AlertCircle,
   CheckCircle2
 } from "lucide-react";
 import { useHealthCheck } from "@/hooks/use-api";
 import type { OCRResult } from "@/types/api";
 import heroBg from "@/assets/hero-bg.jpg";
-
-const features = [
-  {
-    icon: ScanText,
-    title: "Advanced OCR Engine",
-    description: "Powered by Tesseract with support for pharmaceutical document processing.",
-  },
-  {
-    icon: Languages,
-    title: "Multi-Format Support",
-    description: "Process images (PNG, JPG, TIFF) and PDF documents with high accuracy.",
-  },
-  {
-    icon: Shield,
-    title: "Compliance Validation",
-    description: "Automated checking against pharmaceutical regulatory requirements.",
-  },
-  {
-    icon: FileCheck,
-    title: "Error Detection",
-    description: "Intelligent error detection with correction suggestions.",
-  },
-  {
-    icon: Zap,
-    title: "Fast Processing",
-    description: "Real-time OCR processing with confidence scoring.",
-  },
-  {
-    icon: Database,
-    title: "Complete Audit Trail",
-    description: "Full tracking of all documents, results, and compliance checks.",
-  },
-];
 
 const IndexIntegrated = () => {
   const [showUpload, setShowUpload] = useState(false);
@@ -249,32 +210,6 @@ const IndexIntegrated = () => {
             </div>
           </section>
         )}
-        
-        {/* Features Section */}
-        <section className="py-16 md:py-24 bg-muted/30">
-          <div className="container mx-auto px-4 sm:px-6 lg:px-8">
-            <div className="text-center max-w-2xl mx-auto mb-12">
-              <h2 className="font-display text-3xl md:text-4xl font-bold mb-4">
-                Powerful Compliance Features
-              </h2>
-              <p className="text-muted-foreground">
-                Everything you need to ensure regulatory compliance for pharmaceutical labels.
-              </p>
-            </div>
-            
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {features.map((feature, index) => (
-                <FeatureCard 
-                  key={feature.title}
-                  icon={feature.icon}
-                  title={feature.title}
-                  description={feature.description}
-                  delay={index * 100}
-                />
-              ))}
-            </div>
-          </div>
-        </section>
       </main>
       
       <Footer />

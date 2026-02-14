@@ -52,19 +52,6 @@ export interface ErrorDetection {
   detected_date: string;
 }
 
-// Compliance Rule Types
-export interface ComplianceRule {
-  id: number;
-  rule_name: string;
-  rule_type: string;
-  description: string;
-  pattern: string | null;
-  severity: 'low' | 'medium' | 'high' | 'critical';
-  is_active: boolean;
-  created_date: string;
-  updated_date: string;
-}
-
 // Analytics Types
 export interface DashboardStats {
   total_documents: number;
@@ -126,6 +113,11 @@ export interface UploadResponse {
   document_id: number;
   ocr_result_id: number;
   data: OCRResult;
+  detected_language?: string;
+  original_language?: string;
+  translated?: boolean;
+  original_text?: string;
+  translated_text?: string;
 }
 
 export interface ValidationResponse {

@@ -3,19 +3,20 @@ import { Link, useLocation } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { 
   ScanText, 
-  FileText, 
   BarChart3, 
   Settings, 
   Menu, 
   X,
-  BookOpen
+  Moon,
+  Sun,
+  Globe
 } from "lucide-react";
+import { useTheme } from "@/context/ThemeContext";
 import { cn } from "@/lib/utils";
 
 const navItems = [
   { label: "Upload", href: "/", icon: ScanText },
-  { label: "Results", href: "/results", icon: FileText },
-  { label: "Rules", href: "/rules", icon: BookOpen },
+  { label: "Translation", href: "/translation", icon: Globe },
   { label: "Analytics", href: "/analytics", icon: BarChart3 },
 ];
 
@@ -23,6 +24,7 @@ export function Navbar() {
   const [isScrolled, setIsScrolled] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const location = useLocation();
+  const { theme, toggleTheme } = useTheme();
 
   useEffect(() => {
     const handleScroll = () => {
@@ -84,6 +86,21 @@ export function Navbar() {
 
           {/* Right side */}
           <div className="hidden md:flex items-center gap-3">
+            {/* Dark Mode Toggle */}
+            <Button 
+              variant="ghost" 
+              size="icon" 
+              onClick={toggleTheme}
+              aria-label="Toggle dark mode"
+              className="hover:bg-accent"
+            >
+              {theme === 'light' ? (
+                <Moon className="w-5 h-5" />
+              ) : (
+                <Sun className="w-5 h-5" />
+              )}
+            </Button>
+
             {/* Settings -> go to /settings */}
             <Link to="/settings">
               <Button variant="ghost" size="icon" aria-label="Settings">
@@ -133,7 +150,28 @@ export function Navbar() {
                   </Link>
                 );
               })}
-              <div className="pt-2 mt-2 border-t border-border/50">
+              <div className="pt-2 mt-2 border-t border-border/50 flex gap-2">
+                <Button 
+                  variant="ghost" 
+                  size="icon"
+                  onClick={toggleTheme}
+                  className="flex-1 justify-start gap-2"
+                  aria-label="Toggle dark mode"
+                >
+                  {theme === 'light' ? (
+                    <>
+                      <Moon className="w-4 h-4" />
+                      <span>Dark Mode</span>
+                    </>
+                  ) : (
+                    <>
+                      <Sun className="w-4 h-4" />
+                      <span>Light Mode</span>
+                    </>
+                  )}
+                </Button>
+              </div>
+              <div className="pt-2">
                 <Button variant="hero" className="w-full">
                   Get Started
                 </Button>

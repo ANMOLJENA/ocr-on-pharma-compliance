@@ -1,0 +1,4 @@
+# file: C:\Users\Asus\Desktop\ocr-compliance-system-feature-anmolj\backend\services\compliance_service.py
+# hypothesis_version: 6.141.1
+
+[0.0, 100, 'Batch Number Format', 'Drug Name Required', 'Expiry Date Required', 'batch_number', 'check', 'check_type', 'content', 'controlled_substance', 'critical', 'drug_name', 'error', 'expiry_date', 'extracted_text', 'failed', 'format', 'high', 'low', 'manufacturer', 'medium', 'message', 'passed', 'regulatory', 'rule_name', 'rule_type', 'schedule\\s+[I-V]+', 'severity', 'status']

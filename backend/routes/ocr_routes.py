@@ -1,3 +1,4 @@
+
 """
 OCR Routes - API endpoints for OCR processing
 """
@@ -9,6 +10,8 @@ from database import db
 from models.database import Document, OCRResult
 from services.ocr_service import OCRService
 from services.multilingual_ocr_service import MultilingualOCRService
+from services.translation_service import TranslationService
+from services.language_detection_service import LanguageDetectionService
 from services.compliance_service import ComplianceService
 from services.error_detection_service import ErrorDetectionService
 
@@ -292,6 +295,11 @@ def upload_multilingual():
             else:
                 ocr_result = multilingual_ocr_service.process_image_multilingual(file_path)
             
+            print(f"[BACKEND] OCR Result: {ocr_result}")
+            print(f"[BACKEND] Translated: {ocr_result.get('translated')}")
+            print(f"[BACKEND] Original Text: {ocr_result.get('original_text')}")
+            print(f"[BACKEND] Extracted Text (translated): {ocr_result.get('extracted_text')}")
+            
             # Save OCR result with language info
             ocr_record = OCRResult(
                 document_id=document.id,
@@ -320,7 +328,8 @@ def upload_multilingual():
             document.status = 'completed'
             db.session.commit()
             
-            return jsonify({
+            # Prepare response with multilingual data
+            response_data = {
                 'success': True,
                 'document_id': document.id,
                 'ocr_result_id': ocr_record.id,
@@ -328,16 +337,23 @@ def upload_multilingual():
                 'original_language': ocr_result.get('original_language'),
                 'translated': ocr_result.get('translated', False),
                 'original_text': ocr_result.get('original_text'),
-                'translated_text': ocr_result.get('extracted_text') if ocr_result.get('translated') else None,
+                'translated_text': ocr_result.get('extracted_text'),  # ALWAYS send extracted_text as translated
                 'data': ocr_record.to_dict()
-            }), 200
+            }
+            
+            print(f"[BACKEND] Response: {response_data}")
+            print(f"[BACKEND] Response translated_text: {response_data.get('translated_text')[:100] if response_data.get('translated_text') else 'None'}")
+            
+            return jsonify(response_data), 200
             
         except Exception as e:
+            print(f"[BACKEND] Error: {str(e)}")
             document.status = 'failed'
             db.session.commit()
             return jsonify({'error': f'Multilingual OCR processing failed: {str(e)}'}), 500
     
     except Exception as e:
+        print(f"[BACKEND] Error: {str(e)}")
         return jsonify({'error': str(e)}), 500
 
 @bp.route('/multilingual/process/<int:document_id>', methods=['POST'])
@@ -351,6 +367,11 @@ def process_multilingual(document_id):
             ocr_result = multilingual_ocr_service.process_pdf_multilingual(document.file_path)
         else:
             ocr_result = multilingual_ocr_service.process_image_multilingual(document.file_path)
+        
+        print(f"[BACKEND] OCR Result: {ocr_result}")
+        print(f"[BACKEND] Translated: {ocr_result.get('translated')}")
+        print(f"[BACKEND] Original Text: {ocr_result.get('original_text')}")
+        print(f"[BACKEND] Extracted Text (translated): {ocr_result.get('extracted_text')}")
         
         # Save OCR result with language info
         ocr_record = OCRResult(
@@ -378,7 +399,8 @@ def process_multilingual(document_id):
         document.status = 'completed'
         db.session.commit()
         
-        return jsonify({
+        # Prepare response with multilingual data
+        response_data = {
             'success': True,
             'detected_language': ocr_result.get('detected_language'),
             'original_language': ocr_result.get('original_language'),
@@ -386,9 +408,14 @@ def process_multilingual(document_id):
             'original_text': ocr_result.get('original_text'),
             'translated_text': ocr_result.get('extracted_text') if ocr_result.get('translated') else None,
             'data': ocr_record.to_dict()
-        }), 200
+        }
+        
+        print(f"[BACKEND] Response: {response_data}")
+        
+        return jsonify(response_data), 200
         
     except Exception as e:
+        print(f"[BACKEND] Error: {str(e)}")
         return jsonify({'error': str(e)}), 500
 
 @bp.route('/multilingual/languages', methods=['GET'])
@@ -424,21 +451,31 @@ def detect_language():
         file.save(file_path)
         
         try:
-            # Detect language
+            # Extract text from file
             file_type = filename.rsplit('.', 1)[1].lower()
             
             if file_type == 'pdf':
-                detected_lang = multilingual_ocr_service._detect_language_from_image(file_path)
+                ocr_result = ocr_service.process_pdf(file_path)
             else:
-                detected_lang = multilingual_ocr_service._detect_language_from_image(file_path)
+                ocr_result = ocr_service.process_image(file_path)
             
-            lang_name = multilingual_ocr_service.LANGUAGE_CODES.get(detected_lang, detected_lang)
+            extracted_text = ocr_result.get('extracted_text', '')
             
-            return jsonify({
-                'success': True,
-                'detected_language_code': detected_lang,
-                'detected_language': lang_name
-            }), 200
+            # Detect language using LanguageDetectionService
+            lang_detection = LanguageDetectionService.detect_language(extracted_text)
+            
+            if lang_detection['success']:
+                return jsonify({
+                    'success': True,
+                    'detected_language_code': lang_detection['language_code'],
+                    'detected_language': lang_detection['language_name'],
+                    'confidence': lang_detection['confidence']
+                }), 200
+            else:
+                return jsonify({
+                    'success': False,
+                    'error': lang_detection['error']
+                }), 400
             
         finally:
             # Clean up temporary file

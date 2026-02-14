@@ -11,7 +11,6 @@ import type {
   ValidationResponse,
   ErrorDetectionResponse,
   Document,
-  ComplianceRule,
   DashboardStats,
   AccuracyMetrics,
   ComplianceTrends,
@@ -202,66 +201,90 @@ class ApiService {
     );
   }
 
-  // ==================== Rules Management ====================
+  // ==================== Language Support ====================
 
   /**
-   * List all compliance rules
+   * Get supported languages
    */
-  async listRules(): Promise<ApiResponse<ComplianceRule[]>> {
-    return this.fetchApi<ComplianceRule[]>(API_ENDPOINTS.RULES_LIST);
-  }
-
-  /**
-   * Get a specific rule
-   */
-  async getRule(ruleId: number): Promise<ApiResponse<ComplianceRule>> {
-    return this.fetchApi<ComplianceRule>(API_ENDPOINTS.RULES_GET(ruleId));
-  }
-
-  /**
-   * Create a new rule
-   */
-  async createRule(
-    rule: Omit<ComplianceRule, 'id' | 'created_date' | 'updated_date'>
-  ): Promise<ApiResponse<ComplianceRule>> {
-    return this.fetchApi<ComplianceRule>(API_ENDPOINTS.RULES_CREATE, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(rule),
-    });
-  }
-
-  /**
-   * Update an existing rule
-   */
-  async updateRule(
-    ruleId: number,
-    rule: Partial<ComplianceRule>
-  ): Promise<ApiResponse<ComplianceRule>> {
-    return this.fetchApi<ComplianceRule>(API_ENDPOINTS.RULES_UPDATE(ruleId), {
-      method: 'PUT',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(rule),
-    });
-  }
-
-  /**
-   * Delete a rule
-   */
-  async deleteRule(ruleId: number): Promise<ApiResponse<{ message: string }>> {
-    return this.fetchApi<{ message: string }>(
-      API_ENDPOINTS.RULES_DELETE(ruleId),
-      { method: 'DELETE' }
+  async getSupportedLanguages(): Promise<
+    ApiResponse<Record<string, string>>
+  > {
+    return this.fetchApi<Record<string, string>>(
+      API_ENDPOINTS.OCR_LANGUAGES
     );
   }
 
   /**
-   * Toggle rule active status
+   * Upload and process a multilingual document
    */
-  async toggleRule(ruleId: number): Promise<ApiResponse<ComplianceRule>> {
-    return this.fetchApi<ComplianceRule>(API_ENDPOINTS.RULES_TOGGLE(ruleId), {
-      method: 'POST',
-    });
+  async uploadMultilingualDocument(file: File): Promise<ApiResponse<any>> {
+    const formData = new FormData();
+    formData.append('file', file);
+
+    try {
+      const response = await fetch(
+        `${this.baseUrl}${API_ENDPOINTS.OCR_UPLOAD}`,
+        {
+          method: 'POST',
+          body: formData,
+        }
+      );
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        return {
+          success: false,
+          error: data.error || 'Upload failed',
+        };
+      }
+
+      return {
+        success: true,
+        data: data,
+      };
+    } catch (error) {
+      return {
+        success: false,
+        error: error instanceof Error ? error.message : 'Upload failed',
+      };
+    }
+  }
+
+  /**
+   * Detect language from file
+   */
+  async detectLanguage(file: File): Promise<
+    ApiResponse<{ language_code: string; language_name: string; confidence: number }>
+  > {
+    const formData = new FormData();
+    formData.append('file', file);
+
+    try {
+      const response = await fetch(
+        `${this.baseUrl}${API_ENDPOINTS.OCR_DETECT_LANGUAGE}`,
+        {
+          method: 'POST',
+          body: formData,
+        }
+      );
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        return {
+          success: false,
+          error: data.error || 'Language detection failed',
+        };
+      }
+
+      return data;
+    } catch (error) {
+      return {
+        success: false,
+        error: error instanceof Error ? error.message : 'Language detection failed',
+      };
+    }
   }
 }
 

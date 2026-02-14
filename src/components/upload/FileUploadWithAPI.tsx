@@ -22,10 +22,9 @@ export function FileUploadWithAPI({
   onUploadSuccess,
   onUploadError,
 }: FileUploadWithAPIProps) {
-  const { uploadFile, uploading, progress, result, error, reset } = useFileUpload();
+  const { uploadFile, uploading, progress, result, languageInfo, error, reset } = useFileUpload();
   const { toast } = useToast();
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
-  const [multilingualData, setMultilingualData] = useState<any>(null);
 
   const { getRootProps, getInputProps, isDragActive } = useDropzone({
     accept: {
@@ -55,22 +54,7 @@ export function FileUploadWithAPI({
 
     try {
       const response = await uploadFile(selectedFile);
-      
-      console.log('Upload Response:', response); // DEBUG
-      console.log('Translated Text:', response.translated_text); // DEBUG
-      console.log('Original Text:', response.original_text); // DEBUG
-      
-      // Store multilingual data if available
-      if (response.original_text || response.translated_text) {
-        setMultilingualData({
-          originalText: response.original_text,
-          translatedText: response.translated_text,
-          detectedLanguage: response.detected_language,
-          originalLanguage: response.original_language,
-          isTranslated: response.translated,
-        });
-      }
-      
+
       toast({
         title: 'Upload Successful',
         description: `Document processed with ${(response.data.confidence_score * 100).toFixed(1)}% confidence`,
@@ -95,7 +79,6 @@ export function FileUploadWithAPI({
 
   const handleReset = () => {
     setSelectedFile(null);
-    setMultilingualData(null);
     reset();
   };
 
@@ -236,16 +219,16 @@ export function FileUploadWithAPI({
           </Card>
 
           {/* Extracted Text Display with Multilingual Support */}
-          {multilingualData && (
+          {languageInfo && (
             <Card>
               <CardContent className="pt-6">
                 <h3 className="text-lg font-semibold mb-4">Extracted Text</h3>
                 <ExtractedTextDisplay
-                  originalText={multilingualData.originalText}
-                  translatedText={multilingualData.translatedText}
-                  detectedLanguage={multilingualData.detectedLanguage}
-                  originalLanguage={multilingualData.originalLanguage}
-                  isTranslated={multilingualData.isTranslated}
+                  originalText={languageInfo.originalText}
+                  translatedText={languageInfo.translatedText}
+                  detectedLanguage={languageInfo.detectedLanguage}
+                  originalLanguage={languageInfo.originalLanguage}
+                  isTranslated={languageInfo.isTranslated}
                   confidence={result.confidence_score}
                 />
               </CardContent>

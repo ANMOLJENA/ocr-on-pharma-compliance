@@ -15,20 +15,16 @@ export const API_ENDPOINTS = {
   OCR_DOCUMENTS: '/ocr/documents',
   OCR_DELETE: (documentId: number) => `/ocr/documents/${documentId}`,
   
+  // Language Support
+  OCR_LANGUAGES: '/ocr/multilingual/languages',
+  OCR_DETECT_LANGUAGE: '/ocr/multilingual/detect-language',
+  
   // Analytics
   ANALYTICS_DASHBOARD: '/analytics/dashboard',
   ANALYTICS_ACCURACY: '/analytics/accuracy',
   ANALYTICS_TRENDS: '/analytics/compliance-trends',
   ANALYTICS_ERRORS: '/analytics/error-analysis',
   ANALYTICS_CONTROLLED: '/analytics/controlled-substances',
-  
-  // Rules
-  RULES_LIST: '/rules/',
-  RULES_GET: (ruleId: number) => `/rules/${ruleId}`,
-  RULES_CREATE: '/rules/',
-  RULES_UPDATE: (ruleId: number) => `/rules/${ruleId}`,
-  RULES_DELETE: (ruleId: number) => `/rules/${ruleId}`,
-  RULES_TOGGLE: (ruleId: number) => `/rules/${ruleId}/toggle`,
 };
 
 export const HEALTH_CHECK_URL = 'http://localhost:5000/health';

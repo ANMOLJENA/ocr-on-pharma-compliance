@@ -16,49 +16,60 @@ import {
   Clock,
   TrendingUp
 } from "lucide-react";
-import { useNavigate } from "react-router-dom";
+import { useState, useEffect } from "react";
+import { apiService } from "@/services/api.service";
 import heroBg from "@/assets/hero-bg.jpg";
 
-const features = [
-  {
-    icon: ScanText,
-    title: "Advanced OCR Engine",
-    description: "Powered by Tesseract with support for 100+ languages including Hindi, Urdu, Bengali, and Tamil.",
-  },
-  {
-    icon: Languages,
-    title: "Multi-Language Support",
-    description: "Process labels in English, Hindi, Nepali, Bengali, Tamil, Marathi, Urdu and more.",
-  },
-  {
-    icon: Shield,
-    title: "Compliance Validation",
-    description: "Automated checking against country-specific regulatory requirements and mandatory warnings.",
-  },
-  {
-    icon: FileCheck,
-    title: "Rule Management",
-    description: "Flexible rule engine with version control, regex support, and category-based organization.",
-  },
-  {
-    icon: Zap,
-    title: "Fast Processing",
-    description: "GPU-accelerated image processing with OpenCV for optimal OCR accuracy.",
-  },
-  {
-    icon: Database,
-    title: "Audit Trail",
-    description: "Complete audit logging of all processing, decisions, and rule changes for compliance.",
-  },
-];
-
 const Index = () => {
-  const navigate = useNavigate();
+  const [supportedLanguagesCount, setSupportedLanguagesCount] = useState<number>(0);
 
-  const handleFilesUploaded = (files: File[]) => {
-    // Navigate to results page after processing
-    navigate("/results");
-  };
+  useEffect(() => {
+    const fetchLanguages = async () => {
+      try {
+        const response = await apiService.getSupportedLanguages();
+        if (response.success && response.data) {
+          setSupportedLanguagesCount(Object.keys(response.data).length);
+        }
+      } catch (error) {
+        console.error('Failed to fetch supported languages:', error);
+      }
+    };
+
+    fetchLanguages();
+  }, []);
+
+  const features = [
+    {
+      icon: ScanText,
+      title: "Advanced OCR Engine",
+      description: "Powered by Tesseract with support for 100+ languages including Hindi, Urdu, Bengali, and Tamil.",
+    },
+    {
+      icon: Languages,
+      title: "Multi-Language Support",
+      description: `Process labels in ${supportedLanguagesCount > 0 ? supportedLanguagesCount + '+' : '40+'} languages including English, Hindi, Nepali, Bengali, Tamil, Marathi, Urdu and more.`,
+    },
+    {
+      icon: Shield,
+      title: "Compliance Validation",
+      description: "Automated checking against country-specific regulatory requirements and mandatory warnings.",
+    },
+    {
+      icon: FileCheck,
+      title: "Rule Management",
+      description: "Flexible rule engine with version control, regex support, and category-based organization.",
+    },
+    {
+      icon: Zap,
+      title: "Fast Processing",
+      description: "GPU-accelerated image processing with OpenCV for optimal OCR accuracy.",
+    },
+    {
+      icon: Database,
+      title: "Audit Trail",
+      description: "Complete audit logging of all processing, decisions, and rule changes for compliance.",
+    },
+  ];
 
   return (
     <div className="min-h-screen flex flex-col">
@@ -137,7 +148,7 @@ const Index = () => {
             
             {/* Upload Section */}
             <div className="animate-scale-in" style={{ animationDelay: '400ms' }}>
-              <UploadZone onFilesUploaded={handleFilesUploaded} />
+              <UploadZone />
             </div>
           </div>
         </section>

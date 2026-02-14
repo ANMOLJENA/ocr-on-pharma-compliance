@@ -2,6 +2,7 @@ import { useState, useCallback } from "react";
 import { useDropzone } from "react-dropzone";
 import { Upload, Image, X, FileCheck, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { LanguageSelector } from "@/components/language/LanguageSelector";
 import { cn } from "@/lib/utils";
 import { toast } from "@/hooks/use-toast";
 
@@ -12,6 +13,7 @@ interface UploadZoneProps {
 export function UploadZone({ onFilesUploaded }: UploadZoneProps) {
   const [files, setFiles] = useState<File[]>([]);
   const [isProcessing, setIsProcessing] = useState(false);
+  const [selectedLanguage, setSelectedLanguage] = useState<string>("en");
 
   const onDrop = useCallback((acceptedFiles: File[]) => {
     const imageFiles = acceptedFiles.filter(file => 
@@ -63,6 +65,14 @@ export function UploadZone({ onFilesUploaded }: UploadZoneProps) {
 
   return (
     <div className="w-full max-w-3xl mx-auto">
+      {/* Language Selector */}
+      <div className="mb-6 p-4 rounded-lg bg-card border border-border">
+        <LanguageSelector
+          onLanguageSelect={(code) => setSelectedLanguage(code)}
+          showLabel={true}
+        />
+      </div>
+
       {/* Drop Zone */}
       <div
         {...getRootProps()}

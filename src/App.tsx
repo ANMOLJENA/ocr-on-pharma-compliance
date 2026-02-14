@@ -3,10 +3,11 @@ import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { ThemeProvider } from "@/context/ThemeContext";
 import IndexIntegrated from "./pages/IndexIntegrated";
-import Results from "./pages/Results";
-import Rules from "./pages/Rules";
 import Analytics from "./pages/Analytics";
+import TranslationDemo from "./pages/TranslationDemo";
+import SimpleTranslation from "./pages/SimpleTranslation";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient({
@@ -20,21 +21,23 @@ const queryClient = new QueryClient({
 });
 
 const App = () => (
-  <QueryClientProvider client={queryClient}>
-    <TooltipProvider>
-      <Toaster />
-      <Sonner />
-      <BrowserRouter>
-        <Routes>
-          <Route path="/" element={<IndexIntegrated />} />
-          <Route path="/results" element={<Results />} />
-          <Route path="/rules" element={<Rules />} />
-          <Route path="/analytics" element={<Analytics />} />
-          <Route path="*" element={<NotFound />} />
-        </Routes>
-      </BrowserRouter>
-    </TooltipProvider>
-  </QueryClientProvider>
+  <ThemeProvider>
+    <QueryClientProvider client={queryClient}>
+      <TooltipProvider>
+        <Toaster />
+        <Sonner />
+        <BrowserRouter>
+          <Routes>
+            <Route path="/" element={<IndexIntegrated />} />
+            <Route path="/translation" element={<TranslationDemo />} />
+            <Route path="/simple-translation" element={<SimpleTranslation />} />
+            <Route path="/analytics" element={<Analytics />} />
+            <Route path="*" element={<NotFound />} />
+          </Routes>
+        </BrowserRouter>
+      </TooltipProvider>
+    </QueryClientProvider>
+  </ThemeProvider>
 );
 
 export default App;

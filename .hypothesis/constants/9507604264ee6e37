@@ -1,0 +1,4 @@
+# file: C:\Users\Asus\Desktop\ocr-compliance-system-feature-anmolj\backend\routes\ocr_routes.py
+# hypothesis_version: 6.141.1
+
+[200, 400, 500, '.', '/api/ocr', '/documents', '/multilingual/upload', '/upload', 'DELETE', 'GET', 'Invalid file type', 'No file provided', 'No file selected', 'POST', 'actual_value', 'batch_number', 'check_type', 'checks', 'completed', 'compliance_score', 'confidence', 'confidence_score', 'controlled_substance', 'data', 'detected_language', 'document_id', 'drug_name', 'error', 'error_type', 'errors', 'expected_value', 'expiry_date', 'extracted_text', 'failed', 'field_name', 'file', 'jpeg', 'jpg', 'language_code', 'language_name', 'manufacturer', 'message', 'ocr', 'ocr_result_id', 'original_language', 'original_text', 'pdf', 'png', 'processing', 'processing_time', 'severity', 'status', 'success', 'suggestion', 'suggestions', 'supported_languages', 'tiff', 'translated', 'translated_text', 'uploads']

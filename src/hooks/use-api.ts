@@ -4,11 +4,12 @@
 
 import { useState, useEffect } from 'react';
 import { apiService } from '@/services/api.service';
+import { ocrService, type LanguageInfo } from '@/services/ocr.service';
 import type {
   DashboardStats,
   Document,
-  ComplianceRule,
   OCRResult,
+  UploadResponse,
 } from '@/types/api';
 
 /**
@@ -90,81 +91,21 @@ export function useDocuments() {
 }
 
 /**
- * Hook for compliance rules
- */
-export function useComplianceRules() {
-  const [rules, setRules] = useState<ComplianceRule[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-
-  const fetchRules = async () => {
-    setLoading(true);
-    setError(null);
-    try {
-      const response = await apiService.listRules();
-      if (response.success && response.data) {
-        setRules(response.data);
-      } else {
-        setError(response.error || 'Failed to fetch rules');
-      }
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Unknown error');
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  useEffect(() => {
-    fetchRules();
-  }, []);
-
-  const toggleRule = async (id: number) => {
-    try {
-      const response = await apiService.toggleRule(id);
-      if (response.success && response.data) {
-        setRules(
-          rules.map((rule) => (rule.id === id ? response.data! : rule))
-        );
-        return true;
-      }
-      return false;
-    } catch (err) {
-      console.error('Toggle failed:', err);
-      return false;
-    }
-  };
-
-  const deleteRule = async (id: number) => {
-    try {
-      const response = await apiService.deleteRule(id);
-      if (response.success) {
-        setRules(rules.filter((rule) => rule.id !== id));
-        return true;
-      }
-      return false;
-    } catch (err) {
-      console.error('Delete failed:', err);
-      return false;
-    }
-  };
-
-  return { rules, loading, error, refetch: fetchRules, toggleRule, deleteRule };
-}
-
-/**
  * Hook for file upload
  */
 export function useFileUpload() {
   const [uploading, setUploading] = useState(false);
   const [progress, setProgress] = useState(0);
   const [result, setResult] = useState<OCRResult | null>(null);
+  const [languageInfo, setLanguageInfo] = useState<LanguageInfo | null>(null);
   const [error, setError] = useState<string | null>(null);
 
-  const uploadFile = async (file: File) => {
+  const uploadFile = async (file: File): Promise<UploadResponse & { languageInfo?: LanguageInfo }> => {
     setUploading(true);
     setProgress(0);
     setError(null);
     setResult(null);
+    setLanguageInfo(null);
 
     try {
       // Simulate progress
@@ -179,7 +120,27 @@ export function useFileUpload() {
 
       if (response.success && response.data) {
         setResult(response.data);
-        return response;
+
+        // Parse language information from response
+        const parsedResponse = ocrService.parseLanguageResponse(response);
+        if (parsedResponse.success) {
+          setLanguageInfo(parsedResponse.languageInfo);
+          return {
+            ...response,
+            languageInfo: parsedResponse.languageInfo,
+          };
+        } else {
+          // Handle language parsing error gracefully
+          const fallbackLanguageInfo = ocrService.handleLanguageDetectionError(
+            response.data,
+            parsedResponse.error || 'Unknown error'
+          );
+          setLanguageInfo(fallbackLanguageInfo.languageInfo);
+          return {
+            ...response,
+            languageInfo: fallbackLanguageInfo.languageInfo,
+          };
+        }
       } else {
         throw new Error('Upload failed');
       }
@@ -195,10 +156,11 @@ export function useFileUpload() {
     setUploading(false);
     setProgress(0);
     setResult(null);
+    setLanguageInfo(null);
     setError(null);
   };
 
-  return { uploadFile, uploading, progress, result, error, reset };
+  return { uploadFile, uploading, progress, result, languageInfo, error, reset };
 }
 
 /**

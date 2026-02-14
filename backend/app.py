@@ -34,10 +34,9 @@ db.init_app(app)
 os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)
 
 # Import and register blueprints
-from routes import ocr_routes, analytics_routes, rules_routes
+from routes import ocr_routes, analytics_routes
 app.register_blueprint(ocr_routes.bp)
 app.register_blueprint(analytics_routes.bp)
-app.register_blueprint(rules_routes.bp)
 
 @app.route('/health', methods=['GET'])
 def health_check():

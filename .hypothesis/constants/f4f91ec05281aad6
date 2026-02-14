@@ -1,0 +1,4 @@
+# file: C:\Users\Asus\Desktop\ocr-compliance-system-feature-anmolj\backend\services\multilingual_ocr_service.py
+# hypothesis_version: 6.141.1
+
+['Arabic', 'Bengali', 'Chinese', 'Dutch', 'English', 'Estonian', 'French', 'German', 'Greek', 'Gujarati', 'Hebrew', 'Hindi', 'Italian', 'Japanese', 'Kannada', 'Korean', 'Malayalam', 'Marathi', 'Polish', 'Portuguese', 'Punjabi', 'Russian', 'Spanish', 'Swedish', 'Tamil', 'Telugu', 'Thai', 'Turkish', 'Unknown', 'Urdu', 'ar', 'bn', 'confidence', 'de', 'detected_language', 'detection_error', 'el', 'en', 'eng', 'error', 'es', 'et', 'extracted_text', 'fr', 'gu', 'he', 'hi', 'it', 'ja', 'kn', 'ko', 'language_code', 'language_name', 'ml', 'mr', 'nl', 'original_language', 'original_text', 'pa', 'pl', 'pt', 'ru', 'success', 'sv', 'ta', 'te', 'th', 'tr', 'translated', 'translated_text', 'translation_error', 'ur', 'zh']

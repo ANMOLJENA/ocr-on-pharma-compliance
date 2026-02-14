@@ -1,0 +1,4 @@
+# file: C:\Users\Asus\Desktop\ocr-compliance-system-feature-anmolj\backend\services\error_detection_service.py
+# hypothesis_version: 6.141.1
+
+[0.6, 0.7, 0.8, 0.85, 0.9, '0', '1', '5', '8', 'ACETAMINOPHEN', 'ALBUTEROL', 'AMLODIPINE', 'AMOXICILLIN', 'ASPIRIN', 'ATORVASTATIN', 'B', 'BN-YYYY-NNNNNN', 'GABAPENTIN', 'HYDROCHLOROTHIAZIDE', 'I', 'IBUPROFEN', 'LISINOPRIL', 'LOSARTAN', 'METFORMIN', 'METOPROLOL', 'MM/YYYY', 'O', 'OMEPRAZOLE', 'S', 'SERTRALINE', 'SIMVASTATIN', '[A-Z]{10,}', '\\b[I1]{2,}\\b', '\\b[O0]{2,}\\b', '\\d+', '^\\d{2}-\\d{4}$', '^\\d{2}/\\d{4}$', '^\\d{2}\\.\\d{4}$', 'actual_value', 'batch_number', 'character_confusion', 'confidence', 'corrections', 'critical_errors', 'current', 'drug_name', 'error_type', 'expected_value', 'expiry_date', 'extracted_text', 'field', 'field_name', 'format', 'reason', 'spelling', 'suggested', 'suggestion', 'total_errors']

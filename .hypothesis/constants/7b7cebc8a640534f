@@ -1,0 +1,4 @@
+# file: C:\Users\Asus\Desktop\ocr-compliance-system-feature-anmolj\backend\routes\analytics_routes.py
+# hypothesis_version: 6.141.1
+
+[0.0, 0.5, 0.7, 0.9, 1.0, 100, 200, 500, '/accuracy', '/api/analytics', '/compliance-trends', '/dashboard', '/error-analysis', 'GET', 'High', 'Low', 'Medium', 'Very High', 'analytics', 'average_confidence', 'common_fields', 'compliance', 'count', 'data', 'date', 'error', 'error_types', 'failed', 'field', 'pass_rate', 'passed', 'percentage', 'range', 'recent_activity', 'status_breakdown', 'success', 'total_checks', 'total_controlled', 'total_documents', 'total_errors', 'type', 'warning']
