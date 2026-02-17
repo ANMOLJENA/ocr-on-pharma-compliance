@@ -46,6 +46,14 @@ class OCRResult(db.Model):
     manufacturer = db.Column(db.String(255))
     controlled_substance = db.Column(db.Boolean, default=False)
     
+    # Ollama migration fields
+    ocr_engine = db.Column(db.String(50), default='tesseract')  # 'ollama' or 'tesseract'
+    model_name = db.Column(db.String(100))  # e.g., 'llava:latest'
+    fallback_used = db.Column(db.Boolean, default=False)
+    fallback_reason = db.Column(db.String(255))  # reason for fallback
+    pages_processed = db.Column(db.Integer)  # for PDF documents
+    ocr_metadata = db.Column(JSON, default={})  # additional metadata
+    
     # Relationships
     compliance_checks = db.relationship('ComplianceCheck', backref='ocr_result', lazy=True, cascade='all, delete-orphan')
     errors = db.relationship('ErrorDetection', backref='ocr_result', lazy=True, cascade='all, delete-orphan')
@@ -62,7 +70,13 @@ class OCRResult(db.Model):
             'batch_number': self.batch_number,
             'expiry_date': self.expiry_date,
             'manufacturer': self.manufacturer,
-            'controlled_substance': self.controlled_substance
+            'controlled_substance': self.controlled_substance,
+            'ocr_engine': self.ocr_engine,
+            'model_name': self.model_name,
+            'fallback_used': self.fallback_used,
+            'fallback_reason': self.fallback_reason,
+            'pages_processed': self.pages_processed,
+            'ocr_metadata': self.ocr_metadata
         }
 
 

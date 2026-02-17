@@ -1,6 +1,6 @@
 
 """
-OCR Routes - API endpoints for OCR processing
+OCR Routes - API endpoints for OCR processing with Ollama
 """
 
 from flask import Blueprint, request, jsonify
@@ -8,17 +8,18 @@ from werkzeug.utils import secure_filename
 import os
 from database import db
 from models.database import Document, OCRResult
-from services.ocr_service import OCRService
-from services.multilingual_ocr_service import MultilingualOCRService
-from services.translation_service import TranslationService
-from services.language_detection_service import LanguageDetectionService
+from services.ollama_ocr_service import OllamaOCRService
 from services.compliance_service import ComplianceService
 from services.error_detection_service import ErrorDetectionService
 
 bp = Blueprint('ocr', __name__, url_prefix='/api/ocr')
 
-ocr_service = OCRService()
-multilingual_ocr_service = MultilingualOCRService()
+# Initialize Ollama OCR service (primary engine)
+ocr_service = OllamaOCRService(
+    ollama_endpoint=os.getenv('OLLAMA_ENDPOINT', 'http://localhost:11434'),
+    model_name=os.getenv('OLLAMA_MODEL', 'glm-ocr:latest'),
+    timeout=int(os.getenv('OLLAMA_TIMEOUT', '30'))
+)
 compliance_service = ComplianceService()
 error_service = ErrorDetectionService()
 
@@ -29,7 +30,7 @@ def allowed_file(filename):
 
 @bp.route('/upload', methods=['POST'])
 def upload_document():
-    """Upload and process a document"""
+    """Upload and process a document with Ollama OCR"""
     try:
         if 'file' not in request.files:
             return jsonify({'error': 'No file provided'}), 400
@@ -58,7 +59,7 @@ def upload_document():
         db.session.add(document)
         db.session.commit()
         
-        # Process with OCR
+        # Process with Ollama OCR
         try:
             if document.file_type == 'pdf':
                 ocr_result = ocr_service.process_pdf(file_path)
@@ -75,7 +76,10 @@ def upload_document():
                 batch_number=ocr_result.get('batch_number'),
                 expiry_date=ocr_result.get('expiry_date'),
                 manufacturer=ocr_result.get('manufacturer'),
-                controlled_substance=ocr_result.get('controlled_substance', False)
+                controlled_substance=ocr_result.get('controlled_substance', False),
+                ocr_engine='ollama',
+                model_name=ocr_result.get('model_name'),
+                pages_processed=ocr_result.get('pages_processed')
             )
             db.session.add(ocr_record)
             
@@ -93,18 +97,18 @@ def upload_document():
         except Exception as e:
             document.status = 'failed'
             db.session.commit()
-            return jsonify({'error': f'OCR processing failed: {str(e)}'}), 500
+            return jsonify({'error': f'Ollama OCR processing failed: {str(e)}'}), 500
     
     except Exception as e:
         return jsonify({'error': str(e)}), 500
 
 @bp.route('/process/<int:document_id>', methods=['POST'])
 def process_document(document_id):
-    """Process an already uploaded document"""
+    """Process an already uploaded document with Ollama OCR"""
     try:
         document = Document.query.get_or_404(document_id)
         
-        # Process with OCR
+        # Process with Ollama OCR
         if document.file_type == 'pdf':
             ocr_result = ocr_service.process_pdf(document.file_path)
         else:
@@ -120,7 +124,10 @@ def process_document(document_id):
             batch_number=ocr_result.get('batch_number'),
             expiry_date=ocr_result.get('expiry_date'),
             manufacturer=ocr_result.get('manufacturer'),
-            controlled_substance=ocr_result.get('controlled_substance', False)
+            controlled_substance=ocr_result.get('controlled_substance', False),
+            ocr_engine='ollama',
+            model_name=ocr_result.get('model_name'),
+            pages_processed=ocr_result.get('pages_processed')
         )
         db.session.add(ocr_record)
         document.status = 'completed'
@@ -255,11 +262,11 @@ def delete_document(document_id):
         return jsonify({'error': str(e)}), 500
 
 
-# ============ MULTILINGUAL OCR ENDPOINTS ============
+# ============ MULTILINGUAL OCR ENDPOINTS (Ollama Native Support) ============
 
 @bp.route('/multilingual/upload', methods=['POST'])
 def upload_multilingual():
-    """Upload and process a document with multilingual support"""
+    """Upload and process a document with Ollama (native multilingual support)"""
     try:
         if 'file' not in request.files:
             return jsonify({'error': 'No file provided'}), 400
@@ -288,19 +295,14 @@ def upload_multilingual():
         db.session.add(document)
         db.session.commit()
         
-        # Process with multilingual OCR
+        # Process with Ollama (handles multilingual natively)
         try:
             if document.file_type == 'pdf':
-                ocr_result = multilingual_ocr_service.process_pdf_multilingual(file_path)
+                ocr_result = ocr_service.process_pdf(file_path)
             else:
-                ocr_result = multilingual_ocr_service.process_image_multilingual(file_path)
+                ocr_result = ocr_service.process_image(file_path)
             
-            print(f"[BACKEND] OCR Result: {ocr_result}")
-            print(f"[BACKEND] Translated: {ocr_result.get('translated')}")
-            print(f"[BACKEND] Original Text: {ocr_result.get('original_text')}")
-            print(f"[BACKEND] Extracted Text (translated): {ocr_result.get('extracted_text')}")
-            
-            # Save OCR result with language info
+            # Save OCR result
             ocr_record = OCRResult(
                 document_id=document.id,
                 extracted_text=ocr_result['extracted_text'],
@@ -310,70 +312,45 @@ def upload_multilingual():
                 batch_number=ocr_result.get('batch_number'),
                 expiry_date=ocr_result.get('expiry_date'),
                 manufacturer=ocr_result.get('manufacturer'),
-                controlled_substance=ocr_result.get('controlled_substance', False)
+                controlled_substance=ocr_result.get('controlled_substance', False),
+                ocr_engine='ollama',
+                model_name=ocr_result.get('model_name'),
+                pages_processed=ocr_result.get('pages_processed')
             )
-            
-            # Store additional multilingual metadata
-            ocr_record.metadata = {
-                'detected_language': ocr_result.get('detected_language'),
-                'original_language': ocr_result.get('original_language'),
-                'translated': ocr_result.get('translated', False),
-                'original_text': ocr_result.get('original_text'),
-                'translated_text': ocr_result.get('extracted_text') if ocr_result.get('translated') else None
-            }
-            
             db.session.add(ocr_record)
             
             # Update document status
             document.status = 'completed'
             db.session.commit()
             
-            # Prepare response with multilingual data
-            response_data = {
+            return jsonify({
                 'success': True,
                 'document_id': document.id,
                 'ocr_result_id': ocr_record.id,
-                'detected_language': ocr_result.get('detected_language'),
-                'original_language': ocr_result.get('original_language'),
-                'translated': ocr_result.get('translated', False),
-                'original_text': ocr_result.get('original_text'),
-                'translated_text': ocr_result.get('extracted_text'),  # ALWAYS send extracted_text as translated
                 'data': ocr_record.to_dict()
-            }
-            
-            print(f"[BACKEND] Response: {response_data}")
-            print(f"[BACKEND] Response translated_text: {response_data.get('translated_text')[:100] if response_data.get('translated_text') else 'None'}")
-            
-            return jsonify(response_data), 200
+            }), 200
             
         except Exception as e:
-            print(f"[BACKEND] Error: {str(e)}")
             document.status = 'failed'
             db.session.commit()
-            return jsonify({'error': f'Multilingual OCR processing failed: {str(e)}'}), 500
+            return jsonify({'error': f'Ollama OCR processing failed: {str(e)}'}), 500
     
     except Exception as e:
-        print(f"[BACKEND] Error: {str(e)}")
         return jsonify({'error': str(e)}), 500
 
 @bp.route('/multilingual/process/<int:document_id>', methods=['POST'])
 def process_multilingual(document_id):
-    """Process an already uploaded document with multilingual support"""
+    """Process an already uploaded document with Ollama (native multilingual support)"""
     try:
         document = Document.query.get_or_404(document_id)
         
-        # Process with multilingual OCR
+        # Process with Ollama (handles multilingual natively)
         if document.file_type == 'pdf':
-            ocr_result = multilingual_ocr_service.process_pdf_multilingual(document.file_path)
+            ocr_result = ocr_service.process_pdf(document.file_path)
         else:
-            ocr_result = multilingual_ocr_service.process_image_multilingual(document.file_path)
+            ocr_result = ocr_service.process_image(document.file_path)
         
-        print(f"[BACKEND] OCR Result: {ocr_result}")
-        print(f"[BACKEND] Translated: {ocr_result.get('translated')}")
-        print(f"[BACKEND] Original Text: {ocr_result.get('original_text')}")
-        print(f"[BACKEND] Extracted Text (translated): {ocr_result.get('extracted_text')}")
-        
-        # Save OCR result with language info
+        # Save OCR result
         ocr_record = OCRResult(
             document_id=document.id,
             extracted_text=ocr_result['extracted_text'],
@@ -383,104 +360,31 @@ def process_multilingual(document_id):
             batch_number=ocr_result.get('batch_number'),
             expiry_date=ocr_result.get('expiry_date'),
             manufacturer=ocr_result.get('manufacturer'),
-            controlled_substance=ocr_result.get('controlled_substance', False)
+            controlled_substance=ocr_result.get('controlled_substance', False),
+            ocr_engine='ollama',
+            model_name=ocr_result.get('model_name'),
+            pages_processed=ocr_result.get('pages_processed')
         )
-        
-        # Store additional multilingual metadata
-        ocr_record.metadata = {
-            'detected_language': ocr_result.get('detected_language'),
-            'original_language': ocr_result.get('original_language'),
-            'translated': ocr_result.get('translated', False),
-            'original_text': ocr_result.get('original_text'),
-            'translated_text': ocr_result.get('extracted_text') if ocr_result.get('translated') else None
-        }
-        
         db.session.add(ocr_record)
         document.status = 'completed'
         db.session.commit()
         
-        # Prepare response with multilingual data
-        response_data = {
+        return jsonify({
             'success': True,
-            'detected_language': ocr_result.get('detected_language'),
-            'original_language': ocr_result.get('original_language'),
-            'translated': ocr_result.get('translated', False),
-            'original_text': ocr_result.get('original_text'),
-            'translated_text': ocr_result.get('extracted_text') if ocr_result.get('translated') else None,
             'data': ocr_record.to_dict()
-        }
-        
-        print(f"[BACKEND] Response: {response_data}")
-        
-        return jsonify(response_data), 200
+        }), 200
         
     except Exception as e:
-        print(f"[BACKEND] Error: {str(e)}")
         return jsonify({'error': str(e)}), 500
 
 @bp.route('/multilingual/languages', methods=['GET'])
 def get_supported_languages():
-    """Get list of supported languages for OCR"""
+    """Get list of supported languages for Ollama OCR"""
     try:
-        languages = multilingual_ocr_service.get_supported_languages()
+        languages = ocr_service.get_supported_languages()
         return jsonify({
             'success': True,
             'supported_languages': languages
         }), 200
-    except Exception as e:
-        return jsonify({'error': str(e)}), 500
-
-@bp.route('/multilingual/detect-language', methods=['POST'])
-def detect_language():
-    """Detect language from uploaded file"""
-    try:
-        if 'file' not in request.files:
-            return jsonify({'error': 'No file provided'}), 400
-        
-        file = request.files['file']
-        
-        if file.filename == '':
-            return jsonify({'error': 'No file selected'}), 400
-        
-        if not allowed_file(file.filename):
-            return jsonify({'error': 'Invalid file type'}), 400
-        
-        # Save file temporarily
-        filename = secure_filename(file.filename)
-        file_path = os.path.join('uploads', f'temp_{filename}')
-        file.save(file_path)
-        
-        try:
-            # Extract text from file
-            file_type = filename.rsplit('.', 1)[1].lower()
-            
-            if file_type == 'pdf':
-                ocr_result = ocr_service.process_pdf(file_path)
-            else:
-                ocr_result = ocr_service.process_image(file_path)
-            
-            extracted_text = ocr_result.get('extracted_text', '')
-            
-            # Detect language using LanguageDetectionService
-            lang_detection = LanguageDetectionService.detect_language(extracted_text)
-            
-            if lang_detection['success']:
-                return jsonify({
-                    'success': True,
-                    'detected_language_code': lang_detection['language_code'],
-                    'detected_language': lang_detection['language_name'],
-                    'confidence': lang_detection['confidence']
-                }), 200
-            else:
-                return jsonify({
-                    'success': False,
-                    'error': lang_detection['error']
-                }), 400
-            
-        finally:
-            # Clean up temporary file
-            if os.path.exists(file_path):
-                os.remove(file_path)
-    
     except Exception as e:
         return jsonify({'error': str(e)}), 500

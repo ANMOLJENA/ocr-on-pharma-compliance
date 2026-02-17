@@ -35,6 +35,15 @@ class Config:
     
     # Tesseract Configuration
     TESSERACT_CMD = os.getenv('TESSERACT_CMD')
+    
+    # Ollama Configuration (Primary OCR Engine)
+    OLLAMA_ENABLED = os.getenv('OLLAMA_ENABLED', 'true').lower() == 'true'
+    OLLAMA_ENDPOINT = os.getenv('OLLAMA_ENDPOINT', 'http://localhost:11434')
+    OLLAMA_MODEL = os.getenv('OLLAMA_MODEL', 'llava:latest')
+    OLLAMA_TIMEOUT = int(os.getenv('OLLAMA_TIMEOUT', '30'))
+    
+    # Offline Mode
+    OFFLINE_MODE = os.getenv('OFFLINE_MODE', 'false').lower() == 'true'
 
 
 class DevelopmentConfig(Config):
